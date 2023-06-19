@@ -1,0 +1,161 @@
+\qecho CSS475
+\qecho
+\qecho Jericho Timbol
+\qecho
+\qecho #1 Get total number of attendees and capacity for all meetings created by each employee
+\qecho
+
+SELECT  Meeting.id AS id, COUNT(Meeting.id) AS butsinseat, 
+			capacity, creatorid
+FROM Meeting
+	JOIN Attendees ON (Meeting.ID = Attendees.MeetingID)
+	JOIN Room ON (Meeting.RoomID = Room.ID)
+	JOIN Employee ON(Meeting.creatorID = Employee.ID)
+GROUP BY meeting.ID, capacity, creatorid
+ORDER BY meeting.ID;
+
+
+\qecho
+\qecho #2 By creator. How many total attendes in meeting they have made and what are open seats
+\qecho
+
+SELECT employee.name, SUM(TableX.butsinseat) AS attendees, SUM (capacity) AS Capacity, SUM(TableX.Capacity) - SUM(TableX.butsinseat) AS availseats
+FROM ( SELECT  Meeting.id AS id, COUNT(Meeting.id) AS butsinseat, 
+			capacity, creatorid
+		FROM Meeting
+			JOIN Attendees ON (Meeting.ID = Attendees.MeetingID)
+			JOIN Room ON (Meeting.RoomID = Room.ID)
+		GROUP BY meeting.ID, capacity
+		ORDER BY meeting.ID
+	 ) AS TableX
+	JOIN Employee ON (TableX.creatorid = Employee.id)
+GROUP BY Employee.ID, tablex.creatorid
+ORDER BY creatorid,availseats;
+
+\qecho
+\qecho #3 print the employee attending the most meetings,and print 75% of the total number of meetings
+\qecho
+
+SELECT Tablex.name as name, tablex.nummeet*.75 AS maxmeetings
+FROM ( 	SELECT E.name, COUNT(*) as NumMeet
+		FROM Employee E
+    		JOIN Attendees A ON ( E.id = A.employeeid)
+		GROUP BY E.id
+		ORDER BY numMeet DESC
+		LIMIT 1
+		) AS TableX
+GROUP by tablex.name, tablex.nummeet;
+
+
+\qecho
+\qecho #4 Return all employes who are attending more that 75% of the employee with the most meetings
+
+SELECT E.name, COUNT(*) as numMeetings
+FROM Employee E
+    JOIN Attendees A ON ( E.id = A.employeeid)
+GROUP BY E.id
+HAVING COUNT(*) >= (SELECT tablex.nummeet*.75 AS maxmeetings
+					FROM ( 	SELECT E.name, COUNT(*) as NumMeet
+							FROM Employee E
+    							JOIN Attendees A ON ( E.id = A.employeeid)
+							GROUP BY E.id
+							ORDER BY numMeet DESC
+							LIMIT 1
+							) AS TableX
+								)
+ORDER BY numMeetings;
+
+\qecho
+\qecho #5 Find average utilization of rooms as percentage value, for any meetings occuring on 2018-03-04 at 10:00 AM
+\qecho
+
+
+
+
+SELECT round((100*(t1.usedrooms::real / t2.totalrooms::real))::numeric,0) 			AS "UTIL in %"
+FROM (	
+		SELECT DISTINCT COUNT(*) AS usedrooms
+		FROM Meeting m
+			JOIN Room r ON (m.roomid = r.id)
+		WHERE m.starttime <= '2018-03-18 10:00' AND starttime + Duration >= '2018-03-18 10:00' 
+		)AS T1
+	JOIN
+		(	SELECT DISTINCT COUNT (*) totalrooms
+			FROM Room
+		)AS T2 ON (true);
+
+
+\qecho
+\qecho #6 Find the number of employees we have for each phone type. ( Cell, Home etc)
+\qecho
+
+SELECT DISTINCT phonetype.name category, COUNT(DISTINCT employee.id) AS count
+FROM PhoneInfo
+	JOIN PhoneType ON (PhoneType.ID = Phoneinfo.type)
+	JOIN Employee ON (Phoneinfo.employeeID = Employee.ID)
+GROUP BY category
+ORDER BY category;
+
+\qecho
+\qecho #7 Find the number of phone listings we have for each phone type ( Cell, Home, etc)
+\qecho
+
+SELECT name category, COUNT(*) AS count
+FROM PhoneInfo
+	JOIN PhoneType ON (PhoneType.ID = Phoneinfo.type)
+GROUP BY category
+ORDER BY category;
+
+\qecho
+\qecho #8 Number of cell phones in each meeting in building B
+\qecho
+
+SELECT meeting.id, meeting.purpose,COUNT (*) AS numphones  
+FROM PhoneInfo
+	JOIN Employee ON (Phoneinfo.employeeID = Employee.ID)
+	JOIN Attendees ON (Employee.ID = Attendees.employeeid)
+	JOIN Meeting ON (Attendees.meetingID = Meeting.ID)
+	JOIN Room ON (meeting.roomid = room.id)
+WHERE Phoneinfo.type = 'C' AND room.building = 'B'
+GROUP BY meeting.id, meeting.purpose
+ORDER BY meeting.id;
+
+
+\qecho
+\qecho #9 Print the average number of cell phones that attendes have inmeeting in building B
+\qecho
+
+
+SELECT round(AVG(Tablex.numphones)::numeric,2)
+			AS avg_phones
+FROM (	SELECT COUNT (*) AS numphones  
+		FROM PhoneInfo
+			JOIN Employee ON (Phoneinfo.employeeID = Employee.ID)
+			JOIN Attendees ON (Employee.ID = Attendees.employeeid)
+			JOIN Meeting ON (Attendees.meetingID = Meeting.ID)
+			JOIN Room ON (meeting.roomid = room.id)
+		WHERE Phoneinfo.type = 'C' AND room.building = 'B'
+		GROUP BY meeting.id, meeting.purpose
+		ORDER BY meeting.id
+			)AS TableX;
+
+\qecho
+\qecho #10 find number of phones, and average number of phones foreach meeting in building B 
+\qecho
+
+SELECT Tablex.purpose,tablex.numphones, round(33/7::decimal ,2) AS avg_phones
+FROM (	SELECT COUNT (*) AS numphones, meeting.id, meeting,purpose  
+		FROM PhoneInfo
+			JOIN Employee ON (Phoneinfo.employeeID = Employee.ID)
+			JOIN Attendees ON (Employee.ID = Attendees.employeeid)
+			JOIN Meeting ON (Attendees.meetingID = Meeting.ID)
+			JOIN Room ON (meeting.roomid = room.id)
+		WHERE Phoneinfo.type = 'C' AND room.building = 'B'
+		GROUP BY meeting.id, meeting.purpose
+		ORDER BY meeting.id
+		)AS TableX
+GROUP BY tablex.purpose, tablex.id, tablex.numphones;
+
+\qecho
+\qecho
+

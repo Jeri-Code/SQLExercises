@@ -1,0 +1,168 @@
+\qecho Jericho Timbol
+\qecho
+
+\qecho #1 find the Num of meetings per employee.
+
+SELECT name, COUNT(attendees.employeeid) as num_meet
+FROM Employee
+	LEFT JOIN Attendees ON (Employee.id = Attendees.employeeid)
+GROUP BY employee.id
+ORDER BY num_meet, employee.id;
+
+\qecho
+\qecho # 2 Count the number of phone numbers by each type
+\qecho
+
+SELECT name, COUNT(Phoneinfo.id) as count
+FROM PhoneType
+	LEFT JOIN PhoneInfo ON (Phoneinfo.type = PhoneType.id)
+GROUP BY phonetype.id
+ORDER BY name;
+
+\qecho
+\qecho # 3 Count the number of packages for each shipper in the system.
+\qecho
+
+SELECT Shipper.lastname, Shipper.firstname, COUNT(Shipment.id) AS num_packages
+FROM Shipper
+	LEFT JOIN Shipment ON(Shipper.id = Shipment.shipperid)
+	LEFT JOIN Package ON(Shipment.id = Package.shipmentid)
+WHERE Package.pickUpDate IS NULL
+GROUP BY shipper.id
+ORDER BY num_packages, lastname, firstname; 
+
+\qecho
+\qecho # 4 Find number of meetings in each room
+\qecho
+
+SELECT Room.roomnumber, Room.building, COUNT(Meeting.id) AS num_meetings
+FROM Room
+	LEFT JOIN Meeting ON(Room.id = Meeting.roomid)
+GROUP BY Room.id
+ORDER BY Room.building, Room.roomnumber;
+
+\qecho
+\qecho #5 Find all employees with no phone numbers listed
+\qecho
+
+SELECT Employee.employeenumber, Employee.name
+FROM Employee
+	LEFT JOIN Phoneinfo ON (Employee.id = PhoneInfo.employeeid)
+WHERE Phoneinfo.employeeid IS NULL
+GROUP BY Employee.id
+ORDER BY employee.name;
+
+\qecho
+\qecho #6 Find all employees with no meetings
+\qecho
+
+SELECT Employee.employeenumber, Employee.name
+FROM Employee
+	LEFT JOIN Attendees ON (Employee.id = Attendees.employeeid)
+WHERE Attendees.employeeid IS NULL
+GROUP BY Employee.id
+ORDER BY Employee.id;
+
+\qecho
+\qecho #7 Find all phone numbers for every employee who does not have a cell phone
+\qecho
+
+SELECT Employee.employeenumber, Employee.name, PhoneInfo.type AS phone_type, Phoneinfo.number
+FROM Employee
+	JOIN PhoneInfo ON (	Employee.id = PhoneInfo.employeeid)
+				   		WHERE Employee.id IN (SELECT Employee.id
+				   		FROM Employee
+    		 	    		LEFT JOIN phoneInfo ON ( employee.id = phoneInfo.employeeid 
+    								AND  phoneInfo.type ='C')
+                   		WHERE phoneInfo.type IS NULL 
+				   	   )
+GROUP BY Employee.id, Phoneinfo.type,Phoneinfo.number
+ORDER BY employeenumber,phone_type, number;
+
+
+\qecho
+\qecho #8 Find all employees who are in any staff meeting
+\qecho
+
+SELECT Employee.employeenumber, Employee.name
+FROM Employee
+	 JOIN Attendees ON(Employee.ID = Attendees.employeeid)
+	 JOIN Meeting ON (Attendees.Meetingid = Meeting.id)
+WHERE purpose = 'Staff'
+GROUP BY employee.id
+ORDER BY employeenumber;
+
+\qecho
+\qecho #9 Find all employees who are in any staff meeting
+\qecho
+
+SELECT Employee.employeenumber, Employee.name
+FROM Employee
+WHERE employee.employeenumber NOT IN
+		(
+		SELECT Employee.employeenumber
+		FROM Employee
+	 		JOIN Attendees ON(Employee.ID = Attendees.employeeid)
+	 		JOIN Meeting ON (Attendees.Meetingid = Meeting.id)
+		WHERE purpose = 'Staff'
+		GROUP BY employee.id
+		ORDER BY employeenumber
+		)
+GROUP BY employee.id
+ORDER BY employeenumber;
+
+
+\qecho
+\qecho
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

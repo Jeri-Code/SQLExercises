@@ -1,0 +1,76 @@
+\qecho Jericho Timbol
+\qecho
+\qecho #1
+\qecho
+
+SELECT Status.name, COUNT(*) as NumOrders
+FROM Status
+    JOIN Customer_Order ON (Status.id = Customer_Order.Status)
+GROUP BY Status.id
+ORDER BY Status.id ;
+
+\qecho
+\qecho #2
+\qecho
+
+SELECT Catalog.description, COALESCE( SUM(Order_item.quantity),0) as num_sold
+FROM Catalog
+    FULL JOIN Order_Item ON(Catalog.SKU = Order_item.SKU)
+GROUP BY Catalog.SKU
+ORDER BY num_sold, catalog.sku;
+
+
+\qecho
+\qecho #3
+\qecho
+
+SELECT Temp1.status as status, SUM(income) as income, SUM(mugcost) as mugcost, SUM(shipping::dec(2,1))/ 2as shipping
+    FROM      (SELECT Status.Name as status, SUM(Catalog.Price *           Order_Item.quantity) as income, 
+                COUNT(Order_Item.ID) * Quantity * 3.00 AS mugcost, COUNT(Customer_order.ordernumber) * 5.00 AS Shipping
+                FROM Catalog
+                    JOIN Order_Item ON (Catalog.sku = Order_item.sku)
+                    JOIN Customer_order ON (Order_Item.CustomerOrderID = Customer_order.ID)
+                    JOIN Status ON (Customer_order.status = Status.id)
+                    GROUP BY Status.id, Order_item.id
+                    ORDER BY Status.id) AS Temp1
+GROUP BY Temp1.status
+ORDER BY Temp1.status;
+
+\qecho
+\qecho #4
+\qecho
+
+SELECT State.name, COUNT(Customer_order.state) as numsales
+FROM STATE
+    LEFT JOIN Customer_ORDER ON(State.id = Customer_order.state)
+GROUP BY state.id
+ORDER BY state.name;
+
+\qecho
+\qecho #5
+\qecho
+
+SELECT Customer_Order.ordernumber, Order_item.sku, Catalog.Description
+FROM Catalog
+    LEFT JOIN Order_Item ON (Catalog.sku = Order_item.sku)
+    LEFT JOIN Customer_order ON (Order_Item.CustomerOrderID = Customer_order.ID)
+WHERE catalog.numimages = 2 AND order_item.name3 is not null AND  order_item.image3 is not null;
+
+
+
+
+\qecho
+\qecho #6
+\qecho
+
+SELECT Catalog.sku, COUNT(Customer_order.ordernumber) as num
+FROM Customer_Order
+    INNER JOIN Order_Item ON (Customer_Order.id = Order_Item.CustomerOrderID)
+    FULL JOIN Catalog ON (Order_Item.Sku = Catalog.sku)
+WHERE OrderDate = '2021-03-12'
+Group BY catalog.sku
+ORDER BY num DESC, Catalog.sku
+LIMIT 10;
+
+\qecho
+\qecho
